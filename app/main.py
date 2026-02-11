@@ -1,11 +1,15 @@
 from pathlib import Path
+import asyncio
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
 
-from app.services.ai_mock import analyze_with_ai_mock
+from app.services.ai_service import analyze_invoice_with_ai
 from app.services.pdf_validator import extract_pdf_text, validate_invoice_document
+
+load_dotenv()
 
 app = FastAPI(title="Invoice PDF Analyzer", version="0.1.0")
 
@@ -38,7 +42,15 @@ async def upload_invoice(file: UploadFile = File(...)) -> dict:
     if not validation["is_valid"]:
         raise HTTPException(status_code=422, detail=validation["reason"])
 
-    ai_result = analyze_with_ai_mock(extracted_text)
+    try:
+        ai_result = await asyncio.to_thread(analyze_invoice_with_ai, extracted_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI analysis failed: {str(exc)}",
+        ) from exc
 
     return {
         "message": "Document is valid and accepted for AI analysis.",

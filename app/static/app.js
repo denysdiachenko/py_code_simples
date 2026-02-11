@@ -43,7 +43,7 @@ form.addEventListener("submit", async (event) => {
         data.validation,
         null,
         2,
-      )}\n\nAI (mock): ${JSON.stringify(data.ai_analysis, null, 2)}`,
+      )}\n\nAI analysis: ${JSON.stringify(data.ai_analysis, null, 2)}`,
     );
   } catch (error) {
     showResult("error", `Network error: ${error.message}`);
