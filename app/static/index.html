@@ -12,8 +12,8 @@
       <p class="subtitle">The backend validates the document and sends it to AI analysis with structured JSON output.</p>
 
       <form id="upload-form">
-        <label class="file-label" for="pdf-file">Choose a PDF file</label>
-        <input id="pdf-file" name="file" type="file" accept="application/pdf,.pdf" required />
+        <label class="file-label" for="pdf-file">Choose one or more PDF files</label>
+        <input id="pdf-file" name="files" type="file" accept="application/pdf,.pdf" multiple required />
         <button type="submit">Analyze</button>
       </form>
 

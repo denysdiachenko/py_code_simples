@@ -1,7 +1,7 @@
 # PDF Invoice Validator (Python, UI + BE)
 
 A Python fullstack project:
-- `UI`: web page for PDF upload.
+- `UI`: web page for one or many PDF uploads.
 - `BE`: FastAPI endpoint that validates PDF content, checks if it looks like an invoice/bill, and sends it to AI for JSON extraction.
 
 ## AI Agent Recommendation
@@ -15,13 +15,15 @@ This gives stable machine-readable responses and is easy to integrate with backe
 Environment variables are auto-loaded from `.env` via `python-dotenv`.
 
 ## Implemented Features
-1. PDF upload through UI.
+1. Multiple PDF upload through UI.
 2. Backend file handling (`multipart/form-data`).
 3. PDF text extraction (`pypdf`).
 4. Invoice/bill validation with heuristic rules.
 5. Real AI extraction to JSON using OpenAI Responses API.
 6. Fallback to mock if API key is missing (configurable).
-7. If invalid document: returns an error.
+7. Batch response with:
+   - `analyzed_invoices`: array of valid files sent to OpenAI
+   - `invalid_files`: array of files that were not recognized/processed
 
 ## Project Structure
 ```text
@@ -61,7 +63,7 @@ Open in browser:
 3. (Optional) configure:
    - `OPENAI_MODEL` (default: `gpt-4.1-mini`)
    - `USE_MOCK_AI_FALLBACK` (`1` or `0`)
-4. Start the app and upload a PDF.
+4. Start the app and upload one or many PDFs.
 5. Backend flow:
    - Extract text from PDF
    - Validate invoice-like structure
@@ -74,20 +76,23 @@ USE_MOCK_AI_FALLBACK=0
 ```
 
 ## API
-### `POST /api/upload-invoice`
-- Form field: `file` (PDF)
+### `POST /api/upload-invoices`
+- Form field: `files` (multiple PDF files)
 
 Success (`200`):
-- document is valid
-- returns `validation` + `ai_analysis` (structured JSON)
+- returns batch object with:
+  - `summary`
+  - `analyzed_invoices` (array)
+  - `invalid_files` (array)
 
-Errors:
-- `400`: not a PDF, empty file, or unreadable PDF
-- `422`: document does not look like an invoice/bill
-- `500`: missing AI configuration (when fallback disabled)
-- `502`: upstream AI call failed
+The key requested for unrecognized files:
+- `invalid_files`
+
+### Backward-compatible endpoint
+`POST /api/upload-invoice` is still available for single file uploads.
 
 ## Troubleshooting `502 Bad Gateway`
+If AI fails in batch mode, that file is returned in `invalid_files` with a detailed `reason`.
 If `POST /api/upload-invoice` returns `502`, the app reached AI step but upstream call failed.
 
 Common causes:

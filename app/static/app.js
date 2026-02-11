@@ -11,21 +11,23 @@ function showResult(type, content) {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const file = fileInput.files[0];
-  if (!file) {
-    showResult("error", "Please choose a PDF file.");
+  const files = Array.from(fileInput.files || []);
+  if (files.length === 0) {
+    showResult("error", "Please choose at least one PDF file.");
     return;
   }
 
   const formData = new FormData();
-  formData.append("file", file);
+  for (const file of files) {
+    formData.append("files", file);
+  }
 
   const submitButton = form.querySelector("button");
   submitButton.disabled = true;
-  showResult("success", "Uploading and analyzing...");
+  showResult("success", `Uploading and analyzing ${files.length} file(s)...`);
 
   try {
-    const response = await fetch("/api/upload-invoice", {
+    const response = await fetch("/api/upload-invoices", {
       method: "POST",
       body: formData,
     });
@@ -39,11 +41,15 @@ form.addEventListener("submit", async (event) => {
 
     showResult(
       "success",
-      `Success: ${data.message}\n\nFile: ${data.filename}\nValidation: ${JSON.stringify(
-        data.validation,
+      `Success: ${data.message}\n\nSummary: ${JSON.stringify(
+        data.summary,
         null,
         2,
-      )}\n\nAI analysis: ${JSON.stringify(data.ai_analysis, null, 2)}`,
+      )}\n\nAnalyzed invoices: ${JSON.stringify(data.analyzed_invoices, null, 2)}\n\nInvalid files: ${JSON.stringify(
+        data.invalid_files,
+        null,
+        2,
+      )}`,
     );
   } catch (error) {
     showResult("error", `Network error: ${error.message}`);
